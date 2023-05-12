@@ -10,10 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 
-app.get("/", (req, res) => {
-    res.send("Car doctor running");
-});
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.v9m7cjb.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -28,6 +24,11 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
+
+        app.get("/", (req, res) => {
+            res.send("Car doctor running");
+        });
+
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const serviceCollections = client.db("carDoctorDB").collection("services");
@@ -44,9 +45,9 @@ async function run() {
         app.get("/services/:id", async (req, res) => {
             const id = req.params.id;
             console.log("id: " + id);
-            const query = {_id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const options = {
-                projection: {title: 1, price: 1, service_id: 1, img: 1}
+                projection: { title: 1, price: 1, service_id: 1, img: 1 }
             }
             const result = await serviceCollections.findOne(query, options);
             res.send(result);
@@ -60,11 +61,11 @@ async function run() {
 
         // get logged in users total order by query parameters
 
-        app.get("/cart", async (req, res) =>{
+        app.get("/cart", async (req, res) => {
             let query = {};
 
-            if(req.query?.email){
-                query = {email: req.query.email}
+            if (req.query?.email) {
+                query = { email: req.query.email }
             }
 
             const result = await orderCollections.find(query).toArray();
