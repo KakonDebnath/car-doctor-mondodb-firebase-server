@@ -86,6 +86,15 @@ async function run() {
             res.send(result);
         })
 
+        // Delete cart form order collection
+        app.delete("/cartDelete/:id", async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id)};
+            const result = await orderCollections.deleteOne(query);
+            res.send(result);
+        })
+
 
         // Send a ping to confirm a successful connection
         await client.db("carDoctorDB").command({ ping: 1 });
