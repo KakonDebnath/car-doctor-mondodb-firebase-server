@@ -85,6 +85,20 @@ async function run() {
             const result = await orderCollections.insertOne(orderInfo);
             res.send(result);
         })
+        // Update Cart Status 
+        app.patch("/cartStatusUpdate/:id", async (req, res) => {
+            const updateStatus = req.body;
+            const id = req.params.id;
+            const filter  = {_id: new ObjectId(id)};
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                  status: updateStatus.status
+                },
+              };
+            const result = await orderCollections.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
 
         // Delete cart form order collection
         app.delete("/cartDelete/:id", async (req, res) => {
