@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
@@ -8,7 +9,7 @@ const port = process.env.PORT || 5000;
 // middleware
 
 const corsConfig = {
-    origin : "*",
+    origin: "*",
     credentials: true,
     method: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 }
@@ -28,9 +29,29 @@ const client = new MongoClient(uri, {
     }
 });
 
+
+// verify jwt
+const verifyJwt = (req, res, next) => {
+    console.log("hitting verify jwt");
+    console.log(req.headers.authorization);
+    const authorization = req.headers.authorization;
+    if(!authorization) {
+        return res.status(401).send({error: true, message: "Invalid authorization"})
+    }
+
+    const token = authorization.split(" ")[1];
+    console.log("token got :" + token);
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
+        if(err){
+            return res.status(401).send({error: true, message: "Unauthorized access"});
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 async function run() {
     try {
-
         app.get("/", (req, res) => {
             res.send("Car doctor running");
         });
@@ -39,6 +60,15 @@ async function run() {
         // await client.connect();
         const serviceCollections = client.db("carDoctorDB").collection("services");
         const orderCollections = client.db("carDoctorDB").collection("orders");
+
+
+        // jwt
+        app.post("/jwt", async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN,
+                { expiresIn: '1h' });
+            res.send({ token });
+        })
 
 
         // get all services from the service collection
@@ -67,13 +97,11 @@ async function run() {
 
         // get logged in users total order by query parameters
 
-        app.get("/cart", async (req, res) => {
+        app.get("/cart", verifyJwt, async (req, res) => {
             let query = {};
-
             if (req.query?.email) {
                 query = { email: req.query.email }
             }
-
             const result = await orderCollections.find(query).toArray();
             res.send(result);
         })
@@ -89,13 +117,13 @@ async function run() {
         app.patch("/cartStatusUpdate/:id", async (req, res) => {
             const updateStatus = req.body;
             const id = req.params.id;
-            const filter  = {_id: new ObjectId(id)};
+            const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                  status: updateStatus.status
+                    status: updateStatus.status
                 },
-              };
+            };
             const result = await orderCollections.updateOne(filter, updateDoc, options);
             res.send(result);
         })
@@ -104,7 +132,7 @@ async function run() {
         app.delete("/cartDelete/:id", async (req, res) => {
             const id = req.params.id;
             console.log(id);
-            const query = { _id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await orderCollections.deleteOne(query);
             res.send(result);
         })
@@ -124,3 +152,6 @@ run().catch(console.dir);
 app.listen(port, () => {
     console.log("Server listening on port " + port);
 });
+
+// open terminal and node
+// require('crypto').randomBytes(64).toString('hex')
