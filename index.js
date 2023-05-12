@@ -6,7 +6,13 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
+
+const corsConfig = {
+    origin : "*",
+    credentials: true,
+    method: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+}
+app.use(cors(corsConfig));
 app.use(express.json());
 
 
