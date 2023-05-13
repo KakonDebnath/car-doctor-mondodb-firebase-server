@@ -31,25 +31,42 @@ const client = new MongoClient(uri, {
 
 
 // verify jwt
+// const verifyJwt = (req, res, next) => {
+//     const authorization = req.headers.authorization;
+//     if(!authorization) {
+//         return res.status(401).send({error: true, message: "Invalid authorization"})
+//     }
+
+//     const token = authorization.split(" ")[1];
+//     console.log("token got :" + token);
+
+//     jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
+//         if(err){
+//             return res.status(401).send({error: true, message: "Unauthorized access"});
+//         }
+//         req.decoded = decoded;
+//         next();
+//     })
+// }
+// verify jwt 
 const verifyJwt = (req, res, next) => {
-    console.log("hitting verify jwt");
-    console.log(req.headers.authorization);
+    console.log("line-53 " + req.headers.authorization);
     const authorization = req.headers.authorization;
-    if(!authorization) {
-        return res.status(401).send({error: true, message: "Invalid authorization"})
+    if(!authorization){
+        return res.status(401).send({error: true, message: "Authorization failed"});
     }
-
-    const token = authorization.split(" ")[1];
-    console.log("token got :" + token);
-
+    const token = authorization.split(' ')[1];
+    console.log("line-59 " + token);
     jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
         if(err){
-            return res.status(401).send({error: true, message: "Unauthorized access"});
+            return res.status(401).send({error: true, message: "Invalid token"});
         }
         req.decoded = decoded;
         next();
     })
+
 }
+
 async function run() {
     try {
         app.get("/", (req, res) => {
@@ -66,7 +83,7 @@ async function run() {
         app.post("/jwt", async (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN,
-                { expiresIn: '1h' });
+                { expiresIn: 10 });
             res.send({ token });
         })
 
@@ -97,7 +114,11 @@ async function run() {
 
         // get logged in users total order by query parameters
 
-        app.get("/cart", verifyJwt, async (req, res) => {
+        app.get("/cart",verifyJwt, async (req, res) => {
+            // console.log("decoded 118: " + req.decoded.email);
+            if(req.decoded.email !== req.query.email){
+                return res.status(402).send({error: true, message: "access invalid"});
+            }
             let query = {};
             if (req.query?.email) {
                 query = { email: req.query.email }
