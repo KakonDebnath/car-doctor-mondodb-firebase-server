@@ -29,34 +29,14 @@ const client = new MongoClient(uri, {
     }
 });
 
-
-// verify jwt
-// const verifyJwt = (req, res, next) => {
-//     const authorization = req.headers.authorization;
-//     if(!authorization) {
-//         return res.status(401).send({error: true, message: "Invalid authorization"})
-//     }
-
-//     const token = authorization.split(" ")[1];
-//     console.log("token got :" + token);
-
-//     jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
-//         if(err){
-//             return res.status(401).send({error: true, message: "Unauthorized access"});
-//         }
-//         req.decoded = decoded;
-//         next();
-//     })
-// }
-// verify jwt 
 const verifyJwt = (req, res, next) => {
-    console.log("line-53 " + req.headers.authorization);
+    console.log("line-33 " + req.headers.authorization);
     const authorization = req.headers.authorization;
     if(!authorization){
         return res.status(401).send({error: true, message: "Authorization failed"});
     }
     const token = authorization.split(' ')[1];
-    console.log("line-59 " + token);
+    console.log("line-39 " + token);
     jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
         if(err){
             return res.status(401).send({error: true, message: "Invalid token"});
@@ -83,7 +63,7 @@ async function run() {
         app.post("/jwt", async (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN,
-                { expiresIn: 10 });
+                { expiresIn: "1h" });
             res.send({ token });
         })
 
